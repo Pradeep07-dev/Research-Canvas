@@ -29,7 +29,11 @@ const navItems = [
   },
 ];
 
-export default function AppLayout() {
+interface AppLayoutProps {
+  children: React.ReactNode;
+}
+
+export default function AppLayout({ children }: AppLayoutProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
