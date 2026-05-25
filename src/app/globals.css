@@ -1,22 +1,37 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: #fafaf7;
-  --foreground: #1c1c1e;
-  --primary: #5b5bd6;
+  --background: #f7f7f3;
+  --foreground: #171717;
+
+  --card: #ffffff;
+  --card-foreground: #171717;
+
+  --primary: #635bff;
   --primary-foreground: #ffffff;
-  --secondary: #f0f0eb;
-  --secondary-foreground: #3a3a3c;
-  --accent: #e8a838;
-  --accent-foreground: #1c1c1e;
-  --muted: #efefea;
-  --muted-foreground: #6b6b6e;
-  --border: #e4e4df;
-  --input: #f0f0eb;
-  --ring: #5b5bd6;
-  --radius: 10px;
+
+  --secondary: #f3f3ee;
+  --secondary-foreground: #2f2f32;
+
+  --accent: #e6a93d;
+  --accent-foreground: #171717;
+
+  --muted: #f1f1ec;
+  --muted-foreground: #72727a;
+
+  --border: #ecebe4;
+  --input: #f3f3ee;
+  --ring: #635bff;
+
+  --radius: 14px;
+
   --font-sans: "Plus Jakarta Sans", sans-serif;
+
+  --node-paper: #ffffff;
+  --node-insight: #f4f3ff;
+  --node-question: #fff8ef;
+  --node-note: #f2fff6;
+  --node-cluster: #f7f2ff;
 
   --sidebar-width: 240px;
   --sidebar-collapsed: 64px;
@@ -56,6 +71,37 @@
 @layer utilities {
   .font-tabular {
     font-variant-numeric: tabular-nums;
+  }
+
+  .canvas-bg {
+    background-color: var(--background);
+    background-image: radial-gradient(circle, #c8c8c0 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .node-paper {
+    background: var(--node-paper);
+    border: 1px solid var(--border);
+  }
+
+  .node-insight {
+    background: var(--node-insight);
+    border: 1px solid #c4c4f0;
+  }
+
+  .node-question {
+    background: var(--node-question);
+    border: 1px solid #f5d89a;
+  }
+
+  .node-note {
+    background: var(--node-note);
+    border: 1px solid #a8e6bc;
+  }
+
+  .node-cluster {
+    background: var(--node-cluster);
+    border: 1px solid #d4c4f0;
   }
 
   .sidebar-transition {
@@ -108,5 +154,26 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 2px;
+  }
+
+  .glass-toolbar {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(228, 228, 223, 0.8);
+  }
+
+  .insight-gradient {
+    background: linear-gradient(135deg, #f0f0ff 0%, #f8f0ff 100%);
+  }
+
+  .session-card-hover {
+    transition: box-shadow 200ms ease, transform 200ms ease;
+  }
+
+  .session-card-hover:hover {
+    box-shadow: 0 8px 32px rgba(91, 91, 214, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.04);
+    transform: translateY(-1px);
   }
 }

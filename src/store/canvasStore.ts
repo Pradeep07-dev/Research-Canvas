@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { Node, Edge } from "reactflow";
 import { mockNodes, mockEdges } from "@/src/data/mockPapers";
 
@@ -78,6 +79,7 @@ export interface CanvasState {
 
   nodes: Node<ResearchNodeData>[];
   edges: Edge[];
+
   selectedNodeId: string | null;
   sidebarCollapsed: boolean;
   rightPanelOpen: boolean;
@@ -85,15 +87,30 @@ export interface CanvasState {
   recentPapers: RecentPaper[];
 
   setNodes: (nodes: Node<ResearchNodeData>[]) => void;
+
   setEdges: (edges: Edge[]) => void;
+
   selectNode: (id: string | null) => void;
+
   toggleSidebar: () => void;
+
+  setSidebarCollapsed: (collapsed: boolean) => void;
+
   setRightPanel: (open: boolean) => void;
+
   addNode: (node: Node<ResearchNodeData>) => void;
+
   removeNode: (id: string) => void;
 
   createCanvas: (title: string) => string;
+
   switchCanvas: (id: string) => void;
+
+  deleteCanvas: (id: string) => void;
+
+  addRecentPaper: (paper: RecentPaper) => void;
+
+  removeRecentPaper: (id: string) => void;
 }
 
 const defaultCanvas: CanvasSession = {
@@ -112,7 +129,12 @@ const defaultRecentPapers: RecentPaper[] = [
     year: 2017,
     venue: "NeurIPS",
   },
-  { id: "rp-002", title: "GPT-4 Technical Report", year: 2023, venue: "arXiv" },
+  {
+    id: "rp-002",
+    title: "GPT-4 Technical Report",
+    year: 2023,
+    venue: "arXiv",
+  },
   {
     id: "rp-003",
     title: "Chain-of-Thought Prompting",
@@ -127,104 +149,234 @@ const defaultRecentPapers: RecentPaper[] = [
   },
 ];
 
-export const useCanvasStore = create<CanvasState>((set, get) => ({
-  canvases: [defaultCanvas],
-  activeCanvasId: "canvas-001",
-  nodes: mockNodes,
-  edges: mockEdges,
-  selectedNodeId: null,
-  sidebarCollapsed: false,
-  rightPanelOpen: false,
-  recentPapers: defaultRecentPapers,
+export const useCanvasStore = create<CanvasState>()(
+  persist(
+    (set, get) => ({
+      canvases: [defaultCanvas],
+      activeCanvasId: "canvas-001",
 
-  setNodes: (nodes) => {
-    const { activeCanvasId, canvases } = get();
-    set({
-      nodes,
-      canvases: canvases.map((c) =>
-        c.id === activeCanvasId ? { ...c, nodes } : c
-      ),
-    });
-  },
+      nodes: mockNodes,
+      edges: mockEdges,
 
-  setEdges: (edges) => {
-    const { activeCanvasId, canvases } = get();
-    set({
-      edges,
-      canvases: canvases.map((c) =>
-        c.id === activeCanvasId ? { ...c, edges } : c
-      ),
-    });
-  },
-
-  selectNode: (id) => set({ selectedNodeId: id, rightPanelOpen: id !== null }),
-  toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
-  setRightPanel: (open) => set({ rightPanelOpen: open }),
-
-  addNode: (node) => {
-    const { activeCanvasId, canvases, nodes } = get();
-    const newNodes = [...nodes, node];
-    set({
-      nodes: newNodes,
-      canvases: canvases.map((c) =>
-        c.id === activeCanvasId ? { ...c, nodes: newNodes } : c
-      ),
-    });
-  },
-
-  removeNode: (id) => {
-    const { activeCanvasId, canvases, nodes, edges } = get();
-    const newNodes = nodes.filter((n) => n.id !== id);
-    const newEdges = edges.filter((e) => e.source !== id && e.target !== id);
-    set({
-      nodes: newNodes,
-      edges: newEdges,
-      canvases: canvases.map((c) =>
-        c.id === activeCanvasId ? { ...c, nodes: newNodes, edges: newEdges } : c
-      ),
-    });
-  },
-
-  createCanvas: (title: string) => {
-    const id = `canvas-${Date.now()}`;
-    const now = new Date();
-    const dateStr = now.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-    const newCanvas: CanvasSession = {
-      id,
-      title,
-      createdAt: dateStr,
-      lastAccessed: "Just now",
-      nodes: [],
-      edges: [],
-    };
-    set((s) => ({
-      canvases: [...s.canvases, newCanvas],
-      activeCanvasId: id,
-      nodes: [],
-      edges: [],
       selectedNodeId: null,
-      rightPanelOpen: false,
-    }));
-    return id;
-  },
 
-  switchCanvas: (id: string) => {
-    const { canvases } = get();
-    const canvas = canvases.find((c) => c.id === id);
-    if (!canvas) return;
-    set({
-      activeCanvasId: id,
-      nodes: canvas.nodes,
-      edges: canvas.edges,
-      selectedNodeId: null,
+      sidebarCollapsed: false,
+
       rightPanelOpen: false,
-      canvases: canvases.map((c) =>
-        c.id === id ? { ...c, lastAccessed: "Just now" } : c
-      ),
-    });
-  },
-}));
+
+      recentPapers: defaultRecentPapers,
+
+      setNodes: (nodes) => {
+        const { activeCanvasId, canvases } = get();
+
+        set({
+          nodes,
+
+          canvases: canvases.map((canvas) =>
+            canvas.id === activeCanvasId
+              ? {
+                  ...canvas,
+                  nodes,
+                }
+              : canvas
+          ),
+        });
+      },
+
+      setEdges: (edges) => {
+        const { activeCanvasId, canvases } = get();
+
+        set({
+          edges,
+
+          canvases: canvases.map((canvas) =>
+            canvas.id === activeCanvasId
+              ? {
+                  ...canvas,
+                  edges,
+                }
+              : canvas
+          ),
+        });
+      },
+
+      addNode: (node) => {
+        const { activeCanvasId, canvases, nodes } = get();
+
+        const newNodes = [...nodes, node];
+
+        set({
+          nodes: newNodes,
+
+          canvases: canvases.map((canvas) =>
+            canvas.id === activeCanvasId
+              ? {
+                  ...canvas,
+                  nodes: newNodes,
+                }
+              : canvas
+          ),
+        });
+      },
+
+      removeNode: (id) => {
+        const { activeCanvasId, canvases, nodes, edges } = get();
+
+        const newNodes = nodes.filter((node) => node.id !== id);
+
+        const newEdges = edges.filter(
+          (edge) => edge.source !== id && edge.target !== id
+        );
+
+        set({
+          nodes: newNodes,
+          edges: newEdges,
+
+          canvases: canvases.map((canvas) =>
+            canvas.id === activeCanvasId
+              ? {
+                  ...canvas,
+                  nodes: newNodes,
+                  edges: newEdges,
+                }
+              : canvas
+          ),
+        });
+      },
+
+      selectNode: (id) =>
+        set({
+          selectedNodeId: id,
+          rightPanelOpen: id !== null,
+        }),
+
+      toggleSidebar: () =>
+        set((state) => ({
+          sidebarCollapsed: !state.sidebarCollapsed,
+        })),
+
+      setSidebarCollapsed: (collapsed) =>
+        set({
+          sidebarCollapsed: collapsed,
+        }),
+
+      setRightPanel: (open) =>
+        set({
+          rightPanelOpen: open,
+        }),
+
+      createCanvas: (title) => {
+        const id = `canvas-${Date.now()}`;
+
+        const now = new Date();
+
+        const dateStr = now.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+
+        const newCanvas: CanvasSession = {
+          id,
+          title,
+
+          createdAt: dateStr,
+
+          lastAccessed: "Just now",
+
+          nodes: [],
+          edges: [],
+        };
+
+        set((state) => ({
+          canvases: [...state.canvases, newCanvas],
+
+          activeCanvasId: id,
+
+          nodes: [],
+          edges: [],
+
+          selectedNodeId: null,
+
+          rightPanelOpen: false,
+        }));
+
+        return id;
+      },
+
+      switchCanvas: (id) => {
+        const { canvases } = get();
+
+        const canvas = canvases.find((canvas) => canvas.id === id);
+
+        if (!canvas) return;
+
+        set({
+          activeCanvasId: id,
+
+          nodes: canvas.nodes,
+          edges: canvas.edges,
+
+          selectedNodeId: null,
+
+          rightPanelOpen: false,
+
+          canvases: canvases.map((canvas) =>
+            canvas.id === id
+              ? {
+                  ...canvas,
+                  lastAccessed: "Just now",
+                }
+              : canvas
+          ),
+        });
+      },
+
+      deleteCanvas: (id) => {
+        const { canvases, activeCanvasId } = get();
+
+        if (canvases.length <= 1) return;
+
+        const remainingCanvases = canvases.filter((canvas) => canvas.id !== id);
+
+        const activeCanvas =
+          activeCanvasId === id
+            ? remainingCanvases[0]
+            : remainingCanvases.find(
+                (canvas) => canvas.id === activeCanvasId
+              ) || remainingCanvases[0];
+
+        set({
+          canvases: remainingCanvases,
+
+          activeCanvasId: activeCanvas.id,
+
+          nodes: activeCanvas.nodes,
+          edges: activeCanvas.edges,
+
+          selectedNodeId: null,
+
+          rightPanelOpen: false,
+        });
+      },
+
+      addRecentPaper: (paper) => {
+        set((state) => ({
+          recentPapers: [
+            paper,
+            ...state.recentPapers.filter((p) => p.id !== paper.id),
+          ].slice(0, 20),
+        }));
+      },
+
+      removeRecentPaper: (id) => {
+        set((state) => ({
+          recentPapers: state.recentPapers.filter((paper) => paper.id !== id),
+        }));
+      },
+    }),
+    {
+      name: "research-canvas-store",
+    }
+  )
+);

@@ -18,7 +18,7 @@ export default function CanvasScreen() {
   const [newCanvasTitle, setNewCanvasTitle] = useState("");
   const [canvasPanelOpen, setCanvasPanelOpen] = useState(false);
 
-  const { canvases, activeCanvasId, createCanvas, switchCanvas, deleteCanvas } =
+  const { canvases, activeCanvasId, createCanvas, switchCanvas } =
     useCanvasStore();
 
   const handleCreateCanvas = () => {
