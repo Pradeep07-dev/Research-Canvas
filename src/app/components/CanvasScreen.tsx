@@ -11,17 +11,15 @@ import {
   ChevronDown,
   X,
 } from "lucide-react";
+import { useCanvasStore } from "@/src/store/canvasStore";
 
 export default function CanvasScreen() {
   const [showNewCanvasModal, setShowNewCanvasModal] = useState(false);
   const [newCanvasTitle, setNewCanvasTitle] = useState("");
   const [canvasPanelOpen, setCanvasPanelOpen] = useState(false);
 
-  const canvases: any = [];
-  const activeCanvasId: any = 1;
-  const createCanvas: any = [];
-  const switchCanvas: any = [];
-  const deleteCanvas: any = [];
+  const { canvases, activeCanvasId, createCanvas, switchCanvas, deleteCanvas } =
+    useCanvasStore();
 
   const handleCreateCanvas = () => {
     const title = newCanvasTitle.trim() || `New Canvas ${canvases.length + 1}`;
@@ -47,7 +45,7 @@ export default function CanvasScreen() {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-thin py-2">
-            {canvases.map((canvas: any) => (
+            {canvases.map((canvas) => (
               <div
                 key={canvas.id}
                 className={`flex items-center gap-2 px-3 py-2.5 mx-2 rounded-lg cursor-pointer group transition-colors ${
@@ -166,65 +164,6 @@ export default function CanvasScreen() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function AIActionBar({
-  onClose,
-  onAskAI,
-}: {
-  onClose: () => void;
-  onAskAI: (q: string) => void;
-}) {
-  const [query, setQuery] = useState("");
-  const suggestions = [
-    "Summarize common findings across selected papers",
-    "What contradicts this cluster?",
-    "Identify missing research directions",
-    "Explain the relationship between these concepts",
-  ];
-
-  const handleSubmit = () => {
-    const q = query.trim();
-    if (q) onAskAI(q);
-  };
-
-  return (
-    <div className="glass-toolbar rounded-xl shadow-toolbar px-4 py-3">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-          <div className="w-2 h-2 rounded-full bg-primary" />
-        </div>
-        <input
-          autoFocus
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ask AI about the canvas..."
-          className="flex-1 bg-transparent text-[14px] text-foreground placeholder-muted-foreground outline-none"
-          onKeyDown={(e) => {
-            if (e.key === "Escape") onClose();
-            if (e.key === "Enter" && query.trim()) handleSubmit();
-          }}
-        />
-        <kbd
-          onClick={onClose}
-          className="text-[10px] text-muted-foreground bg-muted border border-border rounded px-1.5 py-0.5 cursor-pointer font-mono"
-        >
-          esc
-        </kbd>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {suggestions.map((s, i) => (
-          <button
-            key={`ai-suggestion-${i}`}
-            onClick={() => onAskAI(s)}
-            className="tag-chip bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer text-[11px]"
-          >
-            {s}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

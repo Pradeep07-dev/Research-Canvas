@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description:
     "Spatially organize research papers, connect ideas and reason across literature with an AI-native infinite canvas workspace.",
   icons: {
-    icon: [{ url: "/favicon.ico", type: "image/x-icon" }],
+    icon: [{ url: "/favicon2.ico", type: "image/x-icon" }],
   },
 };
 

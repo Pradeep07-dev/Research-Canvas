@@ -99,11 +99,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <div className="flex items-center h-14 px-4 border-b border-border flex-shrink-0">
             {collapsed ? (
               <div className="flex items-center justify-center w-full">
-                <AppLogo size={28} />
+                <AppLogo size={32} />
               </div>
             ) : (
               <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                <AppLogo size={28} />
+                <AppLogo size={32} />
                 <span className="font-semibold text-[15px] text-foreground tracking-tight flex-1 truncate">
                   Research Canvas
                 </span>
@@ -112,7 +112,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex-shrink-0"
                   title="Collapse sidebar"
                 >
-                  <ChevronLeft size={15} />
+                  <ChevronLeft size={17} />
                 </button>
               </div>
             )}
@@ -122,7 +122,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-sm"
                 title="Expand sidebar"
               >
-                <ChevronRight size={12} />
+                <ChevronRight size={15} />
               </button>
             )}
           </div>
