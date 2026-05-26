@@ -234,7 +234,7 @@ export default function GlobalSearch({ open, onClose }: GlobalSearchProps) {
           {query && (
             <button
               onClick={resetSearchState}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
               aria-label="Clear search"
             >
               <X size={14} />

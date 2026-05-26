@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import AppLayout from "@/src/components/AppLayout";
 import AIWorkspaceScreen from "@/src/app/ai-workspace/components/AIWorkSpaceScreen";
 

@@ -81,7 +81,7 @@ export default function Sidebar({ onSearchOpen }: SidebarProps) {
             </span>
             <button
               onClick={() => setSidebarCollapsed(true)}
-              className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex-shrink-0"
+              className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors flex-shrink-0"
               title="Collapse sidebar"
             >
               <ChevronLeft size={15} />
@@ -91,7 +91,7 @@ export default function Sidebar({ onSearchOpen }: SidebarProps) {
         {collapsed && (
           <button
             onClick={() => setSidebarCollapsed(false)}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-sm"
+            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 cursor-pointer rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-sm"
             title="Expand sidebar"
           >
             <ChevronRight size={12} />
@@ -198,7 +198,7 @@ export default function Sidebar({ onSearchOpen }: SidebarProps) {
                   </button>
                   <button
                     onClick={() => setShowAddPaper(false)}
-                    className="p-1.5 rounded-md text-muted-foreground hover:bg-background transition-colors"
+                    className="p-1.5 rounded-md text-muted-foreground cursor-pointer hover:bg-background transition-colors"
                   >
                     <X size={11} />
                   </button>
@@ -230,7 +230,7 @@ export default function Sidebar({ onSearchOpen }: SidebarProps) {
                   </div>
                   <button
                     onClick={() => removeRecentPaper(paper.id)}
-                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
+                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded cursor-pointer text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
                     title="Remove"
                   >
                     <X size={10} />

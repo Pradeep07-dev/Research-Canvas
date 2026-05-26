@@ -1,19 +1,10 @@
 "use client";
-
 import { useState } from "react";
-import {
-  Archive,
-  Clock,
-  FileText,
-  HelpCircle,
-  Lightbulb,
-  Network,
-  Plus,
-  Search,
-  SlidersHorizontal,
-  Sparkles,
-  X,
-} from "lucide-react";
+import SessionCard from "./SessionCard";
+import SessionDetailPanel from "./SessionDetailPanel";
+import { Plus, Search, SlidersHorizontal, Network, X } from "lucide-react";
+import { useCanvasStore } from "@/src/store/canvasStore";
+import { useRouter } from "next/navigation";
 
 interface Session {
   id: string;
@@ -245,6 +236,11 @@ export default function ResearchSessionsScreen() {
   );
   const [sessions, setSessions] = useState<Session[]>(defaultSessions);
   const [showNewSessionModal, setShowNewSessionModal] = useState(false);
+  const [newSessionTitle, setNewSessionTitle] = useState("");
+  const [newSessionDesc, setNewSessionDesc] = useState("");
+
+  const { createCanvas, switchCanvas, canvases } = useCanvasStore();
+  const router = useRouter();
 
   const filtered = sessions.filter((s) => {
     const matchSearch =
@@ -263,12 +259,46 @@ export default function ResearchSessionsScreen() {
   const selectedSession =
     sessions.find((s) => s.id === selectedSessionId) || null;
 
-  const statusColors: Record<string, string> = {
-    unread: "bg-muted text-muted-foreground",
-    reviewing: "bg-amber-50 text-amber-700",
-    annotated: "bg-blue-50 text-blue-700",
-    connected: "bg-violet-50 text-violet-700",
-    synthesized: "bg-emerald-50 text-emerald-700",
+  const handleCreateSession = () => {
+    const title = newSessionTitle.trim();
+    if (!title) return;
+    const canvasId = createCanvas(title);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    const newSession: Session = {
+      id: `session-${Date.now()}`,
+      title,
+      description: newSessionDesc.trim() || "New research session.",
+      paperCount: 0,
+      insightCount: 0,
+      questionCount: 0,
+      tags: [],
+      lastAccessed: "Just now",
+      createdAt: dateStr,
+      status: "active",
+      papers: [],
+      coverage: 0,
+      canvasId,
+    };
+    setSessions((prev) => [newSession, ...prev]);
+    setSelectedSessionId(newSession.id);
+    setNewSessionTitle("");
+    setNewSessionDesc("");
+    setShowNewSessionModal(false);
+  };
+
+  const handleOpenCanvas = (session: Session) => {
+    if (session.canvasId) {
+      const canvas = canvases.find((c) => c.id === session.canvasId);
+      if (canvas) {
+        switchCanvas(session.canvasId);
+      }
+    }
+    router.push("/");
   };
 
   return (
@@ -286,7 +316,7 @@ export default function ResearchSessionsScreen() {
           </div>
           <button
             onClick={() => setShowNewSessionModal(true)}
-            className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-primary text-primary-foreground text-[12px] sm:text-[13px] font-medium hover:bg-primary/90 transition-all active:scale-95"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 cursor-pointer rounded-lg bg-primary text-primary-foreground text-[12px] sm:text-[13px] font-medium hover:bg-primary/90 transition-all active:scale-95"
           >
             <Plus size={14} />
             <span className="hidden sm:inline">New Session</span>
@@ -311,7 +341,7 @@ export default function ResearchSessionsScreen() {
                 key={`filter-${f}`}
                 onClick={() => setFilter(f)}
                 className={`
-                  px-2.5 sm:px-3 py-1.5 rounded-md text-[11px] sm:text-[12px] font-medium transition-colors capitalize
+                  px-2.5 sm:px-3 py-1.5 rounded-md cursor-pointer text-[11px] sm:text-[12px] font-medium transition-colors capitalize
                   ${
                     filter === f
                       ? "bg-primary text-primary-foreground"
@@ -355,100 +385,16 @@ export default function ResearchSessionsScreen() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {sorted.map((session) => (
-                <button
-                  key={session.id}
+                <SessionCard
+                  key={`session-card-${session.id}`}
+                  session={session}
+                  selected={selectedSessionId === session.id}
                   onClick={() =>
                     setSelectedSessionId(
                       session.id === selectedSessionId ? null : session.id
                     )
                   }
-                  className={`
-        session-card-hover w-full text-left p-5 rounded-xl border transition-all duration-200
-        ${
-          selectedSessionId === session.id
-            ? "border-primary/40 bg-primary/5 shadow-node-selected"
-            : "border-border bg-card hover:border-border/80"
-        }
-      `}
-                >
-                  <div className="flex items-start justify-between gap-3 mb-2.5">
-                    <h3 className="text-[14px] font-semibold text-foreground leading-snug">
-                      {session.title}
-                    </h3>
-                    {session.status === "archived" && (
-                      <Archive
-                        size={13}
-                        className="text-muted-foreground flex-shrink-0 mt-0.5"
-                      />
-                    )}
-                  </div>
-
-                  <p className="text-[12px] text-muted-foreground leading-relaxed mb-3.5 line-clamp-2">
-                    {session.description}
-                  </p>
-
-                  <div className="flex items-center gap-4 mb-3.5">
-                    <div className="flex items-center gap-1.5">
-                      <FileText size={11} className="text-muted-foreground" />
-                      <span className="text-[11px] text-muted-foreground font-tabular">
-                        {session.paperCount} papers
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Lightbulb size={11} className="text-violet-500" />
-                      <span className="text-[11px] text-muted-foreground font-tabular">
-                        {session.insightCount} insights
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <HelpCircle size={11} className="text-amber-500" />
-                      <span className="text-[11px] text-muted-foreground font-tabular">
-                        {session.questionCount} questions
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mb-3.5">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-[10px] text-muted-foreground">
-                        Coverage
-                      </span>
-                      <span className="text-[10px] text-muted-foreground font-tabular">
-                        {session.coverage}%
-                      </span>
-                    </div>
-                    <div className="h-1 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          session.coverage > 60
-                            ? "bg-emerald-400"
-                            : session.coverage > 40
-                            ? "bg-amber-400"
-                            : "bg-border"
-                        }`}
-                        style={{ width: `${session.coverage}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {session.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={`stag-${session.id}-${tag}`}
-                        className="tag-chip bg-muted text-muted-foreground text-[10px]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-1.5 pt-2.5 border-t border-border">
-                    <Clock size={11} className="text-muted-foreground" />
-                    <span className="text-[11px] text-muted-foreground">
-                      {session.lastAccessed}
-                    </span>
-                  </div>
-                </button>
+                />
               ))}
             </div>
           )}
@@ -467,127 +413,72 @@ export default function ResearchSessionsScreen() {
         `}
       >
         {selectedSession && (
-          <div className="p-4">
-            <div className="flex items-start justify-between gap-2 mb-4">
-              <h2 className="text-[14px] font-semibold text-foreground leading-snug">
-                {selectedSession.title}
-              </h2>
+          <SessionDetailPanel
+            session={selectedSession}
+            onClose={() => setSelectedSessionId(null)}
+            onOpenCanvas={() => handleOpenCanvas(selectedSession)}
+          />
+        )}
+      </div>
+
+      {showNewSessionModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowNewSessionModal(false);
+          }}
+        >
+          <div className="bg-card border border-border rounded-xl shadow-panel p-5 w-full max-w-sm animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[14px] font-semibold text-foreground">
+                New Research Session
+              </h3>
               <button
-                onClick={() => setSelectedSessionId(null)}
-                className="p-1.5 rounded-md text-muted-foreground hover:bg-muted transition-colors flex-shrink-0"
+                onClick={() => setShowNewSessionModal(false)}
+                className="p-1 rounded-md text-muted-foreground cursor-pointer hover:bg-muted"
               >
-                <X size={13} />
+                <X size={14} />
               </button>
             </div>
-
-            <p className="text-[12px] text-muted-foreground leading-relaxed mb-4">
-              {selectedSession.description}
+            <input
+              autoFocus
+              value={newSessionTitle}
+              onChange={(e) => setNewSessionTitle(e.target.value)}
+              placeholder="Session title..."
+              className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-[13px] text-foreground placeholder-muted-foreground outline-none focus:border-primary mb-3"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreateSession();
+                if (e.key === "Escape") setShowNewSessionModal(false);
+              }}
+            />
+            <textarea
+              value={newSessionDesc}
+              onChange={(e) => setNewSessionDesc(e.target.value)}
+              placeholder="Description (optional)..."
+              rows={2}
+              className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-[13px] text-foreground placeholder-muted-foreground outline-none focus:border-primary mb-3 resize-none"
+            />
+            <p className="text-[11px] text-muted-foreground mb-3 flex items-center gap-1.5">
+              <Network size={11} />A new Research Canvas will be created for
+              this session.
             </p>
-
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {[
-                { label: "Papers", value: selectedSession.paperCount },
-                { label: "Insights", value: selectedSession.insightCount },
-                { label: "Questions", value: selectedSession.questionCount },
-                { label: "Coverage", value: `${selectedSession.coverage}%` },
-              ].map((m) => (
-                <div
-                  key={`meta-${m.label}`}
-                  className="p-2.5 rounded-lg bg-muted"
-                >
-                  <p className="text-[10px] text-muted-foreground mb-0.5">
-                    {m.label}
-                  </p>
-                  <p className="text-[16px] font-semibold text-foreground font-tabular">
-                    {m.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-1 mb-4 pb-4 border-b border-border">
-              <div className="flex justify-between">
-                <span className="text-[11px] text-muted-foreground">
-                  Last accessed
-                </span>
-                <span className="text-[11px] text-foreground">
-                  {selectedSession.lastAccessed}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[11px] text-muted-foreground">
-                  Created
-                </span>
-                <span className="text-[11px] text-foreground">
-                  {selectedSession.createdAt}
-                </span>
-              </div>
-              {selectedSession.canvasId && (
-                <div className="flex justify-between">
-                  <span className="text-[11px] text-muted-foreground">
-                    Canvas
-                  </span>
-                  <span className="text-[11px] text-primary flex items-center gap-1">
-                    <Network size={10} />
-                    Linked
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Papers
-              </p>
-              {selectedSession.papers.length === 0 ? (
-                <p className="text-[12px] text-muted-foreground italic px-1">
-                  No papers yet.
-                </p>
-              ) : (
-                <div className="space-y-1.5">
-                  {selectedSession.papers.map((paper) => (
-                    <div
-                      key={`dp-${paper.id}`}
-                      className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border hover:bg-muted transition-colors"
-                    >
-                      <FileText
-                        size={12}
-                        className="text-primary flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] text-foreground truncate">
-                          {paper.title}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {paper.year}
-                        </p>
-                      </div>
-                      <span
-                        className={`tag-chip text-[9px] flex-shrink-0 ${
-                          statusColors[paper.status]
-                        }`}
-                      >
-                        {paper.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary/90 transition-all active:scale-95">
-                <Network size={13} />
-                Open Canvas
+            <div className="flex gap-2">
+              <button
+                onClick={handleCreateSession}
+                className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-[13px] font-medium hover:bg-primary/90 transition-all"
+              >
+                Create Session
               </button>
-              <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-                <Sparkles size={13} />
-                Synthesize session
+              <button
+                onClick={() => setShowNewSessionModal(false)}
+                className="flex-1 py-2 rounded-lg border border-border text-[13px] text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Cancel
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
