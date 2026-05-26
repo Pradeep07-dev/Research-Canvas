@@ -1,64 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 type Message = {
-  role: "user" | "model" | "system";
+  role: "user" | "assistant" | "system";
   content: string;
 };
 
-function formatErrorResponse(error: unknown) {
-  return {
-    error: "Gemini API Error",
-    details: error instanceof Error ? error.message : String(error),
-    statusCode: 500,
-  };
-}
-
-function convertMessagesToPrompt(messages: Message[]) {
+function buildPrompt(messages: Message[]) {
   return messages
-    .map((message) => {
-      return `${message.role.toUpperCase()}: ${message.content}`;
+    .map((m) => {
+      if (m.role === "system") {
+        return `System: ${m.content}`;
+      }
+
+      if (m.role === "assistant") {
+        return `Assistant: ${m.content}`;
+      }
+
+      return `User: ${m.content}`;
     })
     .join("\n\n");
 }
 
 export async function POST(request: NextRequest) {
-  let body: any = {};
-
   try {
-    body = await request.json();
+    const body = await request.json();
 
     const { messages, stream = false, model = "gemini-2.5-flash" } = body;
 
-    if (!messages?.length) {
+    if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
-        {
-          error: "Messages are required",
-          details: "Request validation failed",
-        },
+        { error: "Messages are required" },
         { status: 400 }
       );
     }
 
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json(
-        {
-          error: "Gemini API key is missing",
-          details: "Add GEMINI_API_KEY to .env.local",
-        },
+        { error: "Missing GEMINI_API_KEY" },
         { status: 500 }
       );
     }
 
-    const prompt = convertMessagesToPrompt(messages);
+    const prompt = buildPrompt(messages);
+
+    const geminiModel = genAI.getGenerativeModel({
+      model,
+    });
 
     if (stream) {
-      const response = await genAI.models.generateContentStream({
-        model,
-        contents: prompt,
-      });
+      const result = await geminiModel.generateContentStream(prompt);
 
       const encoder = new TextEncoder();
 
@@ -73,15 +66,19 @@ export async function POST(request: NextRequest) {
               )
             );
 
-            for await (const chunk of response) {
-              controller.enqueue(
-                encoder.encode(
-                  `data: ${JSON.stringify({
-                    type: "chunk",
-                    chunk: chunk.text,
-                  })}\n\n`
-                )
-              );
+            for await (const chunk of result.stream) {
+              const text = chunk.text();
+
+              if (text) {
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({
+                      type: "chunk",
+                      chunk: text,
+                    })}\n\n`
+                  )
+                );
+              }
             }
 
             controller.enqueue(
@@ -94,16 +91,12 @@ export async function POST(request: NextRequest) {
 
             controller.close();
           } catch (error) {
-            const formatted = formatErrorResponse(error);
-
-            console.error("Streaming Error:", formatted);
-
             controller.enqueue(
               encoder.encode(
                 `data: ${JSON.stringify({
                   type: "error",
-                  error: formatted.error,
-                  details: formatted.details,
+                  error:
+                    error instanceof Error ? error.message : "Streaming error",
                 })}\n\n`
               )
             );
@@ -122,25 +115,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const response = await genAI.models.generateContent({
-      model,
-      contents: prompt,
-    });
+    const result = await geminiModel.generateContent(prompt);
+
+    const response = await result.response;
 
     return NextResponse.json({
-      content: response.text,
+      content: response.text(),
     });
   } catch (error) {
-    const formatted = formatErrorResponse(error);
-
-    console.error("API Route Error:", formatted);
+    console.error("Gemini Route Error:", error);
 
     return NextResponse.json(
       {
-        error: formatted.error,
-        details: formatted.details,
+        error: error instanceof Error ? error.message : "Internal server error",
       },
-      { status: formatted.statusCode }
+      { status: 500 }
     );
   }
 }

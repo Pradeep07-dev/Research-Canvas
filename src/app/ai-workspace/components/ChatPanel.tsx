@@ -46,7 +46,7 @@ export default function ChatPanel({
 
   const { response, isLoading, error, sendMessage } = useChat(
     "GEMINI",
-    "gemini/gemini-2.5-flash",
+    "gemini-2.5-flash",
     true
   );
 
@@ -106,13 +106,28 @@ export default function ChatPanel({
         content: m.content,
       }));
 
-    sendMessage(
+    await sendMessage(
       [
         { role: "system", content: systemPrompt },
         ...chatHistory,
         { role: "user", content: text.trim() },
       ],
-      { temperature: 0.7, max_tokens: 1500 }
+      {
+        temperature: 0.7,
+        max_tokens: 1500,
+        onChunk: (partial: string) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId
+                ? {
+                    ...m,
+                    content: partial,
+                  }
+                : m
+            )
+          );
+        },
+      }
     );
   };
 

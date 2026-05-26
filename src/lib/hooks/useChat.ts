@@ -6,6 +6,12 @@ import {
   getStreamingChatCompletion,
 } from "@/src/lib/ai/chatCompletion";
 
+interface ChatParameters {
+  temperature?: number;
+  max_tokens?: number;
+  onChunk?: (partial: string) => void;
+}
+
 export function useChat(
   provider: string,
   model: string,
@@ -17,7 +23,7 @@ export function useChat(
   const [error, setError] = useState<Error | null>(null);
 
   const sendMessage = useCallback(
-    async (messages: object[], parameters: object = {}) => {
+    async (messages: object[], parameters: ChatParameters = {}) => {
       setResponse("");
       setFullResponse(streaming ? [] : null);
       setIsLoading(true);
@@ -30,9 +36,13 @@ export function useChat(
             model,
             messages,
             (chunk: any) => {
-              setFullResponse((prev: any[]) => [...prev, chunk]);
-              const content = chunk?.choices?.[0]?.delta?.content;
-              if (content) setResponse((prev) => prev + content);
+              if (typeof chunk === "string" && chunk) {
+                setResponse((prev) => {
+                  const updated = prev + chunk;
+                  parameters.onChunk?.(updated);
+                  return updated;
+                });
+              }
             },
             () => setIsLoading(false),
             (err: Error) => {
@@ -49,7 +59,9 @@ export function useChat(
             parameters
           );
           setFullResponse(result);
-          setResponse(result?.choices?.[0]?.message?.content || "");
+          setResponse(
+            result?.content || result?.choices?.[0]?.message?.content || ""
+          );
           setIsLoading(false);
         }
       } catch (err) {
