@@ -71,6 +71,13 @@ export interface CanvasSession {
   edges: Edge[];
 }
 
+export interface RecentPaper {
+  id: string;
+  title: string;
+  year: number;
+  venue?: string;
+}
+
 export interface CanvasState {
   canvases: CanvasSession[];
   activeCanvasId: string;
